@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCODE Expiry Signup</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center min-h-screen">
+
+<div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+  <h1 class="text-2xl font-bold text-red-600 mb-6 text-center">Sign Up</h1>
+  
+  <form id="signupForm" class="space-y-4">
+    <div>
+      <label class="block text-gray-700 font-semibold">Email</label>
+      <input type="email" id="email" placeholder="example@mail.com" class="border w-full p-3 rounded mt-1 focus:ring-2 focus:ring-red-300 focus:outline-none" required>
+    </div>
+    <div>
+      <label class="block text-gray-700 font-semibold">Password</label>
+      <input type="password" id="password" placeholder="Password" class="border w-full p-3 rounded mt-1 focus:ring-2 focus:ring-red-300 focus:outline-none" required>
+    </div>
+    <div>
+      <label class="block text-gray-700 font-semibold">Confirm Password</label>
+      <input type="password" id="confirmPassword" placeholder="Confirm Password" class="border w-full p-3 rounded mt-1 focus:ring-2 focus:ring-red-300 focus:outline-none" required>
+    </div>
+
+    <button type="submit" class="w-full bg-gradient-to-r from-red-500 to-red-700 text-white py-2 rounded font-semibold hover:scale-105 transition">
+      Sign Up
+    </button>
+
+    <p id="msg" class="text-red-600 text-center text-sm mt-2"></p>
+  </form>
+
+  <p class="text-center mt-4 text-gray-600 text-sm">
+    Already have an account? 
+    <a href="firebase login.html" class="text-red-600 hover:underline font-semibold">Login</a>
+  </p>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// Firebase config (mcode-expiring)
+const firebaseConfig = {
+  apiKey: "AIzaSyD7ty4-tgDn3iQNchRmCDn7lO14kgem10o",
+  authDomain: "mcode-expiring.firebaseapp.com",
+  databaseURL: "https://mcode-expiring-default-rtdb.firebaseio.com",
+  projectId: "mcode-expiring",
+  storageBucket: "mcode-expiring.firebasestorage.app",
+  messagingSenderId: "755995268786",
+  appId: "1:755995268786:web:d961cf7836f51a0c0e9bab",
+  measurementId: "G-6TRLRCVLJM"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+/* ELEMENTS */
+const signupForm = document.getElementById('signupForm');
+const emailEl = document.getElementById('email');
+const passEl = document.getElementById('password');
+const confirmEl = document.getElementById('confirmPassword');
+const msgEl = document.getElementById('msg');
+
+/* SIGNUP FUNCTION */
+async function signup() {
+  const email = emailEl.value.trim();
+  const password = passEl.value;
+  const confirmPassword = confirmEl.value;
+
+  if (!email || !password || !confirmPassword) {
+    msgEl.innerText = "All fields are required!";
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    msgEl.innerText = "Passwords do not match!";
+    return;
+  }
+
+  if (password.length < 6) {
+    msgEl.innerText = "Password must be at least 6 characters";
+    return;
+  }
+
+  msgEl.innerText = "Signing up...";
+  signupForm.querySelector('button').disabled = true;
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // ✅ Save user data in Realtime Database
+    await set(ref(db, `users/${user.uid}`), {
+      email: user.email,
+      role: "merchant",
+      status: "active",
+      createdAt: Date.now(),
+      settings: { thresholdDays: 7, expiryStocks: {} }
+    });
+
+    msgEl.classList.remove("text-red-600");
+    msgEl.classList.add("text-green-600");
+    msgEl.innerText = "Signup successful! Redirecting to login...";
+    setTimeout(() => window.location.href = "firebase login.html", 1500);
+
+  } catch (err) {
+    msgEl.classList.remove("text-green-600");
+    msgEl.classList.add("text-red-600");
+    msgEl.innerText = err.message;
+    signupForm.querySelector('button').disabled = false;
+  }
+}
+
+/* EVENT LISTENERS */
+signupForm.addEventListener("submit", e => { e.preventDefault(); signup(); });
+[emailEl, passEl, confirmEl].forEach(input => {
+  input.addEventListener("keypress", e => { if (e.key === "Enter") signup(); });
+});
+</script>
+</body>
+</html>
