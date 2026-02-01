@@ -2,7 +2,7 @@
   "name": "MCODE SALES",
   "short_name": "MCODE",
   "description": "Smart Sales & Inventory Management App",
-  "start_url": "./index.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#dc2626",
