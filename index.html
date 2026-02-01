@@ -425,7 +425,19 @@ if ("serviceWorker" in navigator) {
       .catch(err => console.error("SW failed", err));
   });
 }
+const banner = document.getElementById("offlineBanner");
 
+function updateOnlineStatus() {
+  if (!navigator.onLine) {
+    banner.classList.remove("hidden");
+  } else {
+    banner.classList.add("hidden");
+  }
+}
+
+window.addEventListener("online", updateOnlineStatus);
+window.addEventListener("offline", updateOnlineStatus);
+updateOnlineStatus();
 </script>
 
 </body>
