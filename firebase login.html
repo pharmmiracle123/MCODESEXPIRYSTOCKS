@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login | MCODE Expiry Stock</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center min-h-screen">
+
+<div class="bg-white shadow-lg rounded-xl p-8 w-96">
+  <h2 class="text-2xl font-bold mb-6 text-center text-red-600">Login</h2>
+
+  <input id="email" type="email" placeholder="Email" class="border p-3 rounded w-full mb-4 focus:ring-2 focus:ring-red-300 focus:outline-none">
+  <input id="password" type="password" placeholder="Password" class="border p-3 rounded w-full mb-4 focus:ring-2 focus:ring-red-300 focus:outline-none">
+
+  <button id="loginBtn" class="bg-gradient-to-r from-red-500 to-red-700 text-white py-2 w-full rounded font-semibold hover:opacity-90 transition-opacity">
+    Login
+  </button>
+
+  <p id="msg" class="text-red-600 mt-3 text-center text-sm"></p>
+
+  <p class="text-center mt-4 text-gray-600 text-sm">
+    Don't have an account?
+    <a href="firebase signup.html" class="text-red-600 font-semibold hover:underline">Sign Up</a>
+  </p>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// Firebase config for mcode-expiring
+const firebaseConfig = {
+  apiKey: "AIzaSyD7ty4-tgDn3iQNchRmCDn7lO14kgem10o",
+  authDomain: "mcode-expiring.firebaseapp.com",
+  projectId: "mcode-expiring",
+  storageBucket: "mcode-expiring.firebasestorage.app",
+  messagingSenderId: "755995268786",
+  appId: "1:755995268786:web:d961cf7836f51a0c0e9bab",
+  measurementId: "G-6TRLRCVLJM"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+/* ELEMENTS */
+const loginBtn = document.getElementById('loginBtn');
+const emailEl = document.getElementById('email');
+const passEl = document.getElementById('password');
+const msgEl = document.getElementById('msg');
+
+// Redirect if already logged in
+onAuthStateChanged(auth, user => {
+  if (user) window.location.href = "index.html";
+});
+
+// Login function
+async function login() {
+  const email = emailEl.value.trim();
+  const password = passEl.value.trim();
+
+  if (!email || !password) {
+    msgEl.innerText = "Please enter email & password";
+    return;
+  }
+
+  loginBtn.disabled = true;
+  loginBtn.innerText = "Logging in...";
+  msgEl.innerText = "";
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    window.location.href = "index.html";
+  } catch (err) {
+    msgEl.innerText = err.message;
+    loginBtn.disabled = false;
+    loginBtn.innerText = "Login";
+  }
+}
+
+// Button click
+loginBtn.addEventListener("click", login);
+
+// Enter key support
+[emailEl, passEl].forEach(input => {
+  input.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") login();
+  });
+});
+</script>
+</body>
+</html>
