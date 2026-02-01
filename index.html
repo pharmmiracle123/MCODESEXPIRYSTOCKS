@@ -2,188 +2,442 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Employee Legal Agreement</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expiry Stock | Inventory Control</title>
 
-<!-- Tailwind -->
+<!-- Tailwind Config -->
+<script>
+tailwind = {
+  config: {
+    theme: {
+      extend: {
+        colors: { 
+          primary: '#16a34a',
+          primaryLight: '#d1fae5',
+          bgGradientStart: '#e6f5ec',
+          bgGradientEnd: '#d1fae5'
+        }
+      }
+    }
+  }
+}
+</script>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#dc2626">
+
+<!-- iOS support -->
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- PDF Tools -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-canvas { touch-action: none }
-.fade-in { animation: fadeIn 1s ease-out forwards }
-@keyframes fadeIn {
-  from { opacity:0; transform:translateY(20px) }
-  to { opacity:1; transform:translateY(0) }
+body { font-family: system-ui, -apple-system; background: linear-gradient(135deg, #e6f5ec 0%, #d1fae5 100%); }
+header { background: linear-gradient(to right, #b91c1c, #f87171); color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+header h1 { text-shadow: 1px 1px 3px rgba(0,0,0,0.3); }
+header p { color: #ffe4e6; }
+.bin-card { transition: transform 0.2s, box-shadow 0.2s; }
+.bin-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+.bin-card.handled { opacity: 0.6; }
+input, button { transition: all 0.2s; }
+input:focus { outline: none; border-color: #b91c1c; background-color: #fff0f0; box-shadow: 0 0 8px rgba(185,28,28,0.5); }
+button:hover { opacity: 0.9; }
+@media print {
+  header, .no-print { display: none !important; }
+  body { background: white; }
+  .bin-card { page-break-inside: avoid; border: 1px solid #000; }
 }
 </style>
 </head>
+<body class="min-h-screen">
 
-<body class="bg-gradient-to-br from-gray-900 via-indigo-900 to-black min-h-screen p-4">
+<header class="border-b py-5">
+  <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-bold">EXPIRY STOCK REGISTER</h1>
+      <p class="text-sm md:text-base mt-1">Inventory Expiry Monitoring</p>
+    </div>
+    <div class="flex gap-3 items-center no-print">
+      <button onclick="window.print()" class="bg-green-600 text-white px-4 py-2 rounded shadow font-semibold hover:bg-green-700">Print</button>
+      <a href="index.html" class="underline text-white font-medium hover:text-gray-100">Dashboard</a>
+    </div>
+  </div>
+</header>
 
-<form id="agreementForm"
- action="https://formsubmit.co/onyekaudechukwum@gmail.com"
- method="POST"
- enctype="multipart/form-data"
- class="max-w-3xl mx-auto bg-white rounded-3xl shadow-2xl p-8 fade-in">
+<main class="max-w-7xl mx-auto px-6 py-8">
 
-<!-- CONFIG -->
-<input type="hidden" name="_subject" value="New Signed Employee Agreement">
-<input type="hidden" name="_captcha" value="false">
-<input type="hidden" name="_template" value="table">
-<input type="hidden" name="_next" value="success.html">
+<!-- Record Stock -->
+<section class="bg-white border rounded-xl mb-6 shadow-lg p-5 no-print">
+  <div class="border-b border-gray-200 pb-3 mb-3">
+    <h2 class="text-xl font-bold text-green-700">Record New Stock</h2>
+    <p class="text-sm text-gray-500">Enter stock details as labeled</p>
+  </div>
+  <form id="stockForm" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <input id="name" required placeholder="Stock Name" class="border px-3 py-2 rounded text-sm shadow-sm">
+    <input id="qty" type="number" required placeholder="Qty" class="border px-3 py-2 rounded text-sm shadow-sm">
+    <input id="batch" placeholder="Batch No" class="border px-3 py-2 rounded text-sm shadow-sm">
+    <input id="expiry" type="date" required class="border px-3 py-2 rounded text-sm shadow-sm">
+    <button type="submit" class="bg-green-600 text-white rounded text-sm font-semibold shadow hover:bg-green-700">Save Record</button>
+  </form>
+  <p id="successMsg" class="text-green-600 text-sm mt-2 hidden">✅ Stock added successfully!</p>
+</section>
 
-<h1 class="text-3xl font-extrabold text-center text-indigo-700 mb-2">
-Employee Agreement & Legal Consent
-</h1>
+<!-- Search -->
+<section class="mb-6">
+  <input type="text" id="searchInput" placeholder="Search stocks..." class="w-full border px-3 py-2 rounded text-sm shadow-sm focus:ring-1 focus:ring-green-600">
+</section>
 
-<p class="text-center text-sm text-gray-500 mb-6">
-Official digital employment & HR service agreement
-</p>
+<!-- Stock Summary -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 text-center">
+  <div class="bg-white border rounded-xl p-6 shadow hover:scale-105 transition-transform">
+    <p class="text-xs text-gray-500">TOTAL ITEMS</p>
+    <p id="totalStocks" class="text-3xl font-bold text-green-700">0</p>
+  </div>
+  <div class="bg-yellow-50 border border-yellow-300 rounded-xl p-6 shadow hover:scale-105 transition-transform">
+    <p class="text-xs">NEAR EXPIRY</p>
+    <p id="nearExpiry" class="text-3xl font-bold text-yellow-700">0</p>
+  </div>
+  <div class="bg-red-50 border border-red-300 rounded-xl p-6 shadow hover:scale-105 transition-transform">
+    <p class="text-xs">EXPIRED</p>
+    <p id="expired" class="text-3xl font-bold text-red-700">0</p>
+  </div>
+</section>
 
-<!-- AUTO DATA -->
-<input type="hidden" id="reference" name="Agreement Reference">
-<input type="hidden" id="timestamp" name="Date & Time Signed">
+<!-- Chart -->
+<section class="bg-white dark:bg-gray-700 border rounded-xl mb-6 shadow-lg p-5">
+  <h2 class="text-xl font-bold text-green-700 dark:text-green-400 mb-4">Stock Status Chart</h2>
+  <canvas id="stockChart" class="w-full h-64"></canvas>
+</section>
 
-<!-- EMPLOYEE DETAILS -->
-<input id="name" name="Employee Full Name" required
- class="w-full border p-3 mb-3 rounded-lg"
- placeholder="Employee Full Name">
+<!-- Stock Records -->
+<section>
+  <h2 class="text-xl font-bold mb-4 text-green-700">Stock Records</h2>
+  <div id="cards" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+  <div id="empty" class="text-center py-12 text-gray-500 hidden">No near-expiry or expired stocks</div>
+  <label class="text-sm font-semibold">Near expiry threshold (days)</label>
+  <input type="number" id="nearDaysInput" value="7" class="border px-2 py-1 rounded text-sm">
+</section>
 
-<input id="email" name="Employee Email" type="email" required
- class="w-full border p-3 mb-3 rounded-lg"
- placeholder="Employee Email Address">
+</main>
 
-<input id="phone" name="Employee Phone Number" required
- class="w-full border p-3 mb-3 rounded-lg"
- placeholder="Employee Phone Number">
-
-<input id="role" name="Position" required
- class="w-full border p-3 mb-5 rounded-lg"
- placeholder="Position / Job Title">
-
-<!-- LEGAL NOTICE -->
-<div class="bg-red-50 border border-red-300 rounded-xl p-4 mb-5 text-sm text-red-800">
-<strong>Legal Notice:</strong><br>
-This agreement is legally binding. Any false declaration, refusal to remit the
-<strong>₦2,000 monthly HR service fee</strong>, or breach of agreement shall be
-subject to investigation and enforcement under applicable
-<strong>Nigerian Labour and Civil Laws</strong>.
+<audio id="alertSound">
+  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+</audio>
+<button id="installBtn"
+  class="fixed bottom-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg hidden">
+  Install App
+</button>
+<div id="offlineBanner"
+ class="hidden fixed top-0 left-0 w-full bg-yellow-400 text-black text-center py-2 z-50">
+  ⚠ You are offline. Some features may not work.
 </div>
+<script type="module">
+/* ===============================
+   FIREBASE IMPORTS
+================================ */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+import {
+  getDatabase,
+  ref,
+  push,
+  onValue,
+  update,
+  remove,
+  get
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import {
+  getAuth,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-<p class="text-sm text-gray-700 mb-5 leading-relaxed">
-By proceeding, the employee acknowledges engagement with the HR management
-service administered by <strong>Onyeka-Udechukwu Miracle (HR Manager)</strong>.
-</p>
+/* ===============================
+   FIREBASE CONFIG (IMPORTANT)
+================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyD7ty4-tgDn3iQNchRmCDn7lO14kgem10o",
+  authDomain: "mcode-expiring.firebaseapp.com",
+  databaseURL: "https://mcode-expiring-default-rtdb.firebaseio.com",
+  projectId: "mcode-expiring",
+  storageBucket: "mcode-expiring.firebasestorage.app",
+  messagingSenderId: "755995268786",
+  appId: "1:755995268786:web:d961cf7836f51a0c0e9bab",
+  measurementId: "G-6TRLRCVLJM"
+};
 
-<label class="flex items-start gap-2 mb-6 text-sm">
-<input type="checkbox" id="agree" required class="scale-125 mt-1">
-<span>
-I confirm that all information provided is accurate, I understand the terms of
-this agreement, and I voluntarily consent to the ₦2,000 monthly obligation.
-</span>
-</label>
+/* ===============================
+   INITIALIZE FIREBASE
+================================ */
+const app = initializeApp(firebaseConfig);
+getAnalytics(app);
+const auth = getAuth(app);
+const db = getDatabase(app);
 
-<!-- SIGNATURE -->
-<h3 class="font-semibold mb-2">Employee Digital Signature</h3>
-<p class="text-xs text-gray-500 mb-2">
-Please sign clearly. This digital signature is legally valid.
-</p>
+/* ===============================
+   ELEMENTS
+================================ */
+const stockForm = document.getElementById("stockForm");
+const nameInput = document.getElementById("name");
+const qtyInput = document.getElementById("qty");
+const batchInput = document.getElementById("batch");
+const expiryInput = document.getElementById("expiry");
+const successMsg = document.getElementById("successMsg");
 
-<canvas id="signature" width="500" height="180"
- class="border rounded-xl bg-gray-50 mb-3"></canvas>
+const cards = document.getElementById("cards");
+const empty = document.getElementById("empty");
+const totalEl = document.getElementById("totalStocks");
+const nearEl = document.getElementById("nearExpiry");
+const expiredEl = document.getElementById("expired");
+const searchInput = document.getElementById("searchInput");
+const nearDaysInput = document.getElementById("nearDaysInput");
+const alertSound = document.getElementById("alertSound");
 
-<button type="button" onclick="clearSignature()"
- class="bg-red-500 text-white px-4 py-2 rounded mb-6 hover:scale-105 transition">
-Clear Signature
-</button>
+/* ===============================
+   STATE
+================================ */
+let currentUser = null;
+let stocksRef = null;
+let thresholdRef = null;
+let allStocks = {};
+let thresholdDays = 7;
+let lastAlertKey = "";
 
-<!-- ID -->
-<h3 class="font-semibold mb-2">School or Department-Issued Identification</h3>
-<input name="Government ID" type="file" required
- accept="image/*,.pdf" class="mb-6">
+/* ===============================
+   AUTH + AUTO USER CREATION
+================================ */
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    alert("Please login first");
+    window.location.href = "firebase login.html";
+    return;
+  }
 
-<input type="file" name="Signed Agreement PDF" id="pdfFile" hidden>
+  currentUser = user;
+  const uid = user.uid;
 
-<button type="button" onclick="submitAgreement()"
- class="w-full bg-indigo-700 text-white py-4 rounded-xl font-semibold
- hover:bg-indigo-800 hover:scale-[1.02] transition shadow-lg">
-Submit & Finalize Agreement
-</button>
+  const userRef = ref(db, `users/${uid}`);
 
-<p class="text-xs text-center mt-6 text-gray-600">
-HR Manager: <strong>Onyeka-Udechukwu Miracle</strong><br>
-This document is digitally generated and legally enforceable
-</p>
-</form>
-<h1 class="text-3xl font-extrabold text-center text-indigo-700 mb-2">
-<b>IF IT DOESN'T SUBMIT, REFRESH THE NEXT PAGE AFTER CLICKING SUBMIT</b>
-</h1>
-<script>
-/* AUTO META */
-reference.value = "HR-" + Math.random().toString(36).substr(2,8).toUpperCase();
-timestamp.value = new Date().toLocaleString();
+  // 🔥 AUTO-CREATE USER RECORD
+  const snap = await get(userRef);
+  if (!snap.exists()) {
+    await update(userRef, {
+      email: user.email,
+      role: "merchant",
+      status: "active",
+      createdAt: Date.now(),
+      settings: {
+        thresholdDays: 7,
+        expiryStocks: {}
+      }
+    });
+  }
 
-/* SIGNATURE (SMOOTH) */
-const canvas = document.getElementById("signature");
-const ctx = canvas.getContext("2d");
-let drawing = false;
-ctx.lineWidth = 2.5;
-ctx.lineCap = "round";
-ctx.lineJoin = "round";
+  thresholdRef = ref(db, `users/${uid}/settings/thresholdDays`);
+  stocksRef = ref(db, `users/${uid}/settings/expiryStocks`);
 
-canvas.addEventListener("pointerdown", e => {
- drawing = true;
- ctx.beginPath();
- ctx.moveTo(e.offsetX, e.offsetY);
+  // Listen threshold
+  onValue(thresholdRef, s => {
+    if (s.exists()) {
+      thresholdDays = Number(s.val());
+      nearDaysInput.value = thresholdDays;
+      renderStocks();
+    }
+  });
+
+  // Listen stocks
+  onValue(stocksRef, s => {
+    allStocks = s.val() || {};
+    renderStocks();
+  });
 });
-canvas.addEventListener("pointermove", e => {
- if(!drawing) return;
- ctx.lineTo(e.offsetX, e.offsetY);
- ctx.stroke();
-});
-canvas.addEventListener("pointerup", ()=> drawing=false);
 
-function clearSignature(){
- ctx.clearRect(0,0,canvas.width,canvas.height);
+/* ===============================
+   ADD STOCK
+================================ */
+stockForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!stocksRef) return;
+
+  const stock = {
+    name: nameInput.value.trim(),
+    qty: Number(qtyInput.value),
+    batch: batchInput.value.trim() || "-",
+    expiry: expiryInput.value,
+    handled: false,
+    createdAt: Date.now()
+  };
+
+  await push(stocksRef, stock);
+  stockForm.reset();
+  successMsg.classList.remove("hidden");
+  setTimeout(() => successMsg.classList.add("hidden"), 2000);
+});
+
+/* ===============================
+   THRESHOLD CHANGE
+================================ */
+nearDaysInput.addEventListener("change", () => {
+  const val = Number(nearDaysInput.value);
+  if (isNaN(val) || val < 0) return;
+  thresholdDays = val;
+  update(ref(db, `users/${currentUser.uid}/settings`), {
+    thresholdDays: val
+  });
+});
+
+/* ===============================
+   RENDER STOCKS
+================================ */
+function renderStocks() {
+  cards.innerHTML = "";
+  let total = 0, near = 0, expired = 0;
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const filter = searchInput.value.toLowerCase();
+  const entries = Object.entries(allStocks);
+
+  if (!entries.length) {
+    empty.classList.remove("hidden");
+    totalEl.textContent = nearEl.textContent = expiredEl.textContent = "0";
+    updateChart(0,0,0);
+    return;
+  }
+
+  empty.classList.add("hidden");
+  let shouldAlert = false;
+
+  entries.forEach(([id, s]) => {
+    if (!s || (filter && !s.name.toLowerCase().includes(filter))) return;
+
+    total++;
+    const exp = new Date(s.expiry);
+    exp.setHours(0,0,0,0);
+    const diff = Math.ceil((exp - today) / 86400000);
+
+    let status = "OK", color = "border-gray-300";
+    if (diff < 0) { status = "EXPIRED"; color = "border-red-500"; expired++; shouldAlert = true; }
+    else if (diff <= thresholdDays) { status = "NEAR EXPIRY"; color = "border-yellow-500"; near++; shouldAlert = true; }
+
+    const card = document.createElement("div");
+    card.className = `bg-white border-l-4 ${color} p-5 rounded shadow`;
+
+    card.innerHTML = `
+      <table class="w-full text-sm">
+        <tr><td class="font-semibold">Stock</td><td>${s.name}</td></tr>
+        <tr><td class="font-semibold">Qty</td><td>${s.qty}</td></tr>
+        <tr><td class="font-semibold">Batch</td><td>${s.batch}</td></tr>
+        <tr><td class="font-semibold">Expiry</td><td>${s.expiry}</td></tr>
+        <tr><td class="font-semibold">Status</td><td class="font-bold">${status}</td></tr>
+      </table>
+    `;
+
+    const actions = document.createElement("div");
+    actions.className = "mt-4 grid grid-cols-2 gap-2";
+
+    const markBtn = document.createElement("button");
+    markBtn.textContent = s.handled ? "Unmark" : "Mark Handled";
+    markBtn.className = s.handled ? "bg-gray-400 text-white py-1 rounded" : "bg-green-600 text-white py-1 rounded";
+    markBtn.onclick = () =>
+      update(ref(db, `users/${currentUser.uid}/settings/expiryStocks/${id}`), {
+        handled: !s.handled
+      });
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "Delete";
+    delBtn.className = "bg-red-700 text-white py-1 rounded";
+    delBtn.onclick = () =>
+      confirm("Delete this stock?") &&
+      remove(ref(db, `users/${currentUser.uid}/settings/expiryStocks/${id}`));
+
+    actions.append(markBtn, delBtn);
+    card.appendChild(actions);
+    cards.appendChild(card);
+  });
+
+  totalEl.textContent = total;
+  nearEl.textContent = near;
+  expiredEl.textContent = expired;
+
+  const alertKey = `${near}-${expired}`;
+  if (shouldAlert && alertKey !== lastAlertKey) {
+    alertSound.currentTime = 0;
+    alertSound.play().catch(()=>{});
+    lastAlertKey = alertKey;
+  }
+
+  updateChart(total, near, expired);
 }
 
-/* PDF */
-async function submitAgreement(){
- if(!agree.checked){ alert("You must agree before submission."); return; }
+/* ===============================
+   SEARCH
+================================ */
+searchInput.addEventListener("input", renderStocks);
 
- const { jsPDF } = window.jspdf;
- const pdf = new jsPDF();
+/* ===============================
+   CHART
+================================ */
+const ctx = document.getElementById("stockChart").getContext("2d");
+let stockChart = null;
 
- const snap = await html2canvas(agreementForm,{scale:2});
- pdf.addImage(snap.toDataURL(),"PNG",10,10,190,0);
-
- pdf.addPage();
- pdf.setFontSize(13);
- pdf.text("Monthly ₦2,000 HR Service Acknowledgment",20,30);
- pdf.setFontSize(11);
- pdf.text(
-"I hereby acknowledge my obligation to remit ₦2,000 monthly as an HR service fee.\n" +
-"This obligation remains valid throughout my engagement period.",
-20,50);
-
- pdf.addPage();
- pdf.text("Employee Signature",20,30);
- pdf.addImage(canvas.toDataURL(),"PNG",20,40,150,50);
- pdf.text("Reference: "+reference.value,20,100);
- pdf.text("Signed: "+timestamp.value,20,110);
-
- const blob = pdf.output("blob");
- const file = new File([blob],"Employee_Agreement.pdf",{type:"application/pdf"});
- const dt = new DataTransfer();
- dt.items.add(file);
- pdfFile.files = dt.files;
-
- agreementForm.submit();
+function updateChart(total, near, expired) {
+  if (!stockChart) {
+    stockChart = new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        labels: ["Total", "Near Expiry", "Expired"],
+        datasets: [{
+          data: [total, near, expired],
+          backgroundColor: ["#16a34a", "#facc15", "#dc2626"]
+        }]
+      },
+      options: { responsive: true }
+    });
+  } else {
+    stockChart.data.datasets[0].data = [total, near, expired];
+    stockChart.update();
+  }
 }
+let deferredPrompt;
+const installBtn = document.getElementById("installBtn");
+
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.classList.remove("hidden");
+});
+
+installBtn.addEventListener("click", async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const choice = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  installBtn.classList.add("hidden");
+});
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js")
+      .then(() => console.log("Service Worker Registered"))
+      .catch(err => console.error("SW failed", err));
+  });
+}
+const banner = document.getElementById("offlineBanner");
+
+function updateOnlineStatus() {
+  if (!navigator.onLine) {
+    banner.classList.remove("hidden");
+  } else {
+    banner.classList.add("hidden");
+  }
+}
+
+window.addEventListener("online", updateOnlineStatus);
+window.addEventListener("offline", updateOnlineStatus);
+updateOnlineStatus();
 </script>
 
 </body>
