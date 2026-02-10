@@ -69,9 +69,13 @@ button:hover { opacity: 0.9; }
     <div class="flex items-center gap-4">
 
       <!-- LOGO SPACE -->
-      <img src="icon-192.png" alt="MCODES EXPIIRY"
-        class="w-12 h-12 object-contain rounded-lg border">
-
+     <div class="w-12 h-12 border rounded-lg flex items-center justify-center bg-white">
+  <img
+    src="icon-192.png"
+    alt="MCODES EXPIRY"
+    class="w-10 h-10 object-contain"
+  />
+</div>
       <!-- TITLE -->
       <div>
         <h1 class="text-xl md:text-2xl font-bold text-gray-800">
@@ -529,23 +533,28 @@ navigator.serviceWorker.register("service-worker.js")
 }
 
 // --- PAYSTACK SUBSCRIPTION ---
-const subscribeBtn = document.getElementById('subscribeBtn');
+const subscribeBtn = document.getElementById("subscribeBtn");
 
-subscribeBtn.addEventListener('click', () => {
-const handler = PaystackPop.setup({
-key: "pk_live_258fa9605c51c7f7a1f5c20e0254ddf80671d878", // Replace with your Paystack public key
-email: "user@example.com", // Replace with current user email
-plan: "PLN_gtevyquns1w3oyp", // Replace with your Paystack plan code
-callback: function(response) {
-alert('Payment successful. Reference: ' + response.reference);
-// Optionally refresh subscription status
-location.reload();
-},
-onClose: function() {
-alert('Subscription cancelled.');
-}
-});
-handler.openIframe();
+subscribeBtn.addEventListener("click", () => {
+  if (!currentUser || !currentUser.email) {
+    alert("User not authenticated");
+    return;
+  }
+  
+  const handler = PaystackPop.setup({
+    key: "pk_live_258fa9605c51c7f7a1f5c20e0254ddf80671d878",
+    email: currentUser.email, // ✅ REAL USER EMAIL
+    plan: "PLN_gtevyquns1w3oyp",
+    callback: function(response) {
+      alert("Payment successful. Reference: " + response.reference);
+      location.reload();
+    },
+    onClose: function() {
+      alert("Subscription cancelled.");
+    }
+  });
+  
+  handler.openIframe();
 });
 
 </script>
