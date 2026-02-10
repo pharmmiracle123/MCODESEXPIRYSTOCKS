@@ -71,6 +71,11 @@ button:hover { opacity: 0.9; }
     <div class="flex gap-3 items-center no-print">
       <button onclick="window.print()" class="bg-green-600 text-white px-4 py-2 rounded shadow font-semibold hover:bg-green-700">Print</button>
       <a href="index.html" class="underline text-white font-medium hover:text-gray-100">Dashboard</a>
+      
+      <!-- Subscribe Button -->
+      <button id="subscribeBtn" class="bg-green-600 text-white px-4 py-2 rounded shadow font-semibold hover:bg-green-700">
+        Subscribe ₦5,000/Month
+      </button>
     </div>
   </div>
 </header>
@@ -216,7 +221,7 @@ let thresholdDays = 7;
 let lastAlertKey = "";
 
 /* ===============================
-   AUTH + AUTO USER CREATION
+   AUTH + AUTO USER CREATION + SUBSCRIPTION CHECK
 ================================ */
 onAuthStateChanged(auth, async user => {
   if (!user) {
@@ -224,12 +229,11 @@ onAuthStateChanged(auth, async user => {
     window.location.href = "firebase login.html";
     return;
   }
-
+  
   currentUser = user;
   const uid = user.uid;
-
   const userRef = ref(db, `users/${uid}`);
-
+  
   // 🔥 AUTO-CREATE USER RECORD
   const snap = await get(userRef);
   if (!snap.exists()) {
@@ -244,10 +248,22 @@ onAuthStateChanged(auth, async user => {
       }
     });
   }
-
+  
+  // ===== SUBSCRIPTION CHECK =====
+  const subRef = ref(db, `users/${user.email.replace('.', '_')}/subscription`);
+  onValue(subRef, snap => {
+    const sub = snap.val();
+    if (!sub || sub.status !== 'active') {
+      alert("Your subscription expired. Please pay to continue.");
+      auth.signOut(); // auto logout
+      window.location.href = "firebase login.html";
+    }
+  });
+  
+  // ===== THRESHOLD & STOCKS =====
   thresholdRef = ref(db, `users/${uid}/settings/thresholdDays`);
   stocksRef = ref(db, `users/${uid}/settings/expiryStocks`);
-
+  
   // Listen threshold
   onValue(thresholdRef, s => {
     if (s.exists()) {
@@ -256,14 +272,13 @@ onAuthStateChanged(auth, async user => {
       renderStocks();
     }
   });
-
+  
   // Listen stocks
   onValue(stocksRef, s => {
     allStocks = s.val() || {};
     renderStocks();
   });
 });
-
 /* ===============================
    ADD STOCK
 ================================ */
@@ -431,23 +446,46 @@ installBtn.addEventListener("click", async () => {
 const offlineBanner = document.getElementById("offlineBanner");
 
 function updateOnlineStatus() {
-  if (!navigator.onLine) {
-    offlineBanner.classList.remove("hidden");
-  } else {
-    offlineBanner.classList.add("hidden");
-  }
+if (!navigator.onLine) {
+offlineBanner.classList.remove("hidden");
+} else {
+offlineBanner.classList.add("hidden");
+}
 }
 
 window.addEventListener("online", updateOnlineStatus);
 window.addEventListener("offline", updateOnlineStatus);
 updateOnlineStatus();
+
+// --- SERVICE WORKER REGISTRATION ---
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js")
-      .then(() => console.log("Service Worker Registered"))
-      .catch(err => console.error("SW failed", err));
-  });
+window.addEventListener("load", () => {
+navigator.serviceWorker.register("service-worker.js")
+.then(() => console.log("Service Worker Registered"))
+.catch(err => console.error("SW failed", err));
+});
 }
+
+// --- PAYSTACK SUBSCRIPTION ---
+const subscribeBtn = document.getElementById('subscribeBtn');
+
+subscribeBtn.addEventListener('click', () => {
+const handler = PaystackPop.setup({
+key: "pk_live_258fa9605c51c7f7a1f5c20e0254ddf80671d878", // Replace with your Paystack public key
+email: "user@example.com", // Replace with current user email
+plan: "PLN_gtevyquns1w3oyp", // Replace with your Paystack plan code
+callback: function(response) {
+alert('Payment successful. Reference: ' + response.reference);
+// Optionally refresh subscription status
+location.reload();
+},
+onClose: function() {
+alert('Subscription cancelled.');
+}
+});
+handler.openIframe();
+});
 </script>
-</body>
-</html>
+
+<!-- PAYSTACK INLINE SCRIPT -->
+<script src="https://js.paystack.co/v1/inline.js"></script>
