@@ -62,24 +62,59 @@ button:hover { opacity: 0.9; }
 </head>
 <body class="min-h-screen">
 
-<header class="border-b py-5">
-  <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
-    <div>
-      <h1 class="text-2xl md:text-3xl font-bold">EXPIRY STOCK REGISTER</h1>
-      <p class="text-sm md:text-base mt-1">Inventory Expiry Monitoring</p>
+<header class="border-b py-4 bg-white shadow-sm">
+  <div class="max-w-7xl mx-auto px-6 flex flex-wrap justify-between items-center gap-4">
+
+    <!-- LEFT SIDE: Logo + Title -->
+    <div class="flex items-center gap-4">
+
+      <!-- LOGO SPACE -->
+      <img src="icon-192.png" alt="MCODES EXPIIRY"
+        class="w-12 h-12 object-contain rounded-lg border">
+
+      <!-- TITLE -->
+      <div>
+        <h1 class="text-xl md:text-2xl font-bold text-gray-800">
+          EXPIRY STOCK REGISTER
+        </h1>
+        <p class="text-sm text-gray-500">
+          Inventory Expiry Monitoring
+        </p>
+      </div>
+
     </div>
-    <div class="flex gap-3 items-center no-print">
-      <button onclick="window.print()" class="bg-green-600 text-white px-4 py-2 rounded shadow font-semibold hover:bg-green-700">Print</button>
-      <a href="index.html" class="underline text-white font-medium hover:text-gray-100">Dashboard</a>
-      
-      <!-- Subscribe Button -->
-      <button id="subscribeBtn" class="bg-green-600 text-white px-4 py-2 rounded shadow font-semibold hover:bg-green-700">
+
+    <!-- RIGHT SIDE: ACTION BUTTONS -->
+    <div class="flex flex-wrap gap-3 items-center no-print">
+
+      <!-- Print -->
+      <button onclick="window.print()"
+        class="bg-green-600 text-white px-4 py-2 rounded shadow font-semibold hover:bg-green-700 transition">
+        Print
+      </button>
+
+      <!-- Dashboard -->
+      <a href="index.html"
+        class="underline font-medium text-gray-700 hover:text-green-600 transition">
+        Dashboard
+      </a>
+
+      <!-- Subscribe -->
+      <button id="subscribeBtn"
+        class="bg-green-600 text-white px-4 py-2 rounded shadow font-semibold hover:bg-green-700 transition">
         Subscribe ₦5,000/Month
       </button>
+
+      <!-- Logout -->
+      <button id="logoutBtn"
+        class="bg-red-600 text-white px-4 py-2 rounded shadow font-semibold hover:bg-red-700 transition">
+        Logout
+      </button>
+
     </div>
+
   </div>
 </header>
-
 <main class="max-w-7xl mx-auto px-6 py-8">
 
 <!-- Record Stock -->
@@ -153,8 +188,12 @@ button:hover { opacity: 0.9; }
 /* ===============================
    FIREBASE IMPORTS
 ================================ */
+
+// Core
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+
+// Database
 import {
   getDatabase,
   ref,
@@ -164,11 +203,34 @@ import {
   remove,
   get
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+// Auth
 import {
   getAuth,
-  onAuthStateChanged
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+/* ===============================
+   LOGOUT LOGIC
+================================ */
+
+const logoutBtn = document.getElementById("logoutBtn");
+
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", async () => {
+    const confirmLogout = confirm("Are you sure you want to logout?");
+    if (!confirmLogout) return;
+    
+    try {
+      await signOut(auth);
+      window.location.href = "firebase login.html";
+    } catch (error) {
+      console.error("Logout error:", error);
+      alert("Error logging out. Please try again.");
+    }
+  });
+}
 /* ===============================
    FIREBASE CONFIG (IMPORTANT)
 ================================ */
@@ -485,6 +547,7 @@ alert('Subscription cancelled.');
 });
 handler.openIframe();
 });
+
 </script>
 
 <!-- PAYSTACK INLINE SCRIPT -->
